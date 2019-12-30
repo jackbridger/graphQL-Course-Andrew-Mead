@@ -55,7 +55,7 @@ const Mutation = {
         return user;
     }
     ,
-    createPost: (parent, args, { db }, info) => {
+    createPost: (parent, args, { db, pubsub }, info) => {
         const userExists = db.userData.some(user => user.id === args.data.author)
         if (!userExists) throw new Error('user not found')
 
@@ -65,6 +65,9 @@ const Mutation = {
             comments: []
         }
         db.postsData.push(newPost);
+        pubsub.publish('newPost', {
+            newPost
+        })
         return newPost
     },
     deletePost: (parent, args, { db }, info) => {
@@ -79,9 +82,31 @@ const Mutation = {
         // delete the comments
 
         return postToDelete
+    },
+    updatePost: (parent, { id, data }, { db }, info) => {
+        // const { title, body, published, author } = data
+
+        const postToUpdate = db.postsData.find(post => post.id === id)
+        if (postToUpdate === -1) {
+            throw new Error('post doesnt exist')
+        }
+        if (typeof data.title === 'string') {
+            postToUpdate.title = data.title
+        }
+
+        if (typeof data.body === 'string') {
+            postToUpdate.body = data.body
+        }
+
+        if (typeof data.published === 'boolean') {
+            postToUpdate.published = data.published
+        }
+
+        return postToUpdate
+
     }
     ,
-    createComment: (parent, args, { db }, info) => {
+    createComment: (parent, args, { db, pubsub }, info) => {
         const userExists = db.userData.some(user => user.id === args.data.author)
         const postExists = db.postsData.some(post => post.id === args.data.post)
         if (!userExists) throw new Error('user doesnt exist')
@@ -91,6 +116,9 @@ const Mutation = {
             ...args.data
         }
         db.commentsData.push(newComment);
+        pubsub.publish(`newComment ${args.data.post}`,
+            { newComment }
+        )
         return newComment
 
     },
@@ -102,6 +130,18 @@ const Mutation = {
         db.commentsData = db.commentsData.filter(comment => comment.id !== args.id)
 
         return commentToDelete
+    },
+    updateComment: (parent, { id, data }, { db }, info) => {
+        const commentToUpdate = db.commentsData.find(comment => comment.id === id);
+        if (!data)
+            return commentToUpdate
+
+        if (commentToUpdate === -1) throw new Error('comment doent exist')
+
+        if (typeof data.text === 'string') {
+            commentToUpdate.text = data.text;
+        }
+        return commentToUpdate;
     }
 }
 export { Mutation as default }
