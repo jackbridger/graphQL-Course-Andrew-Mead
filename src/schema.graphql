@@ -18,7 +18,7 @@
         updateComment(id: ID! data:UpdateCommentInput): Comment!
     }
     type Subscription {
-        newComment(postID: ID!): Comment!,
+        newComment(postID: ID!): CommentSubscriptionPayload!,
         newPost: PostSubscriptionPayload!
     }
     input CreateCommentInput {
@@ -80,4 +80,8 @@
     type PostSubscriptionPayload {
         mutation: String!
         data: Post!
+    }
+    type CommentSubscriptionPayload {
+        mutation: String!
+        data: Comment!
     }

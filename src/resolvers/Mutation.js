@@ -154,22 +154,32 @@ const Mutation = {
             ...args.data
         }
         db.commentsData.push(newComment);
-        pubsub.publish(`newComment ${args.data.post}`,
-            { newComment }
-        )
+        pubsub.publish(`newComment ${args.data.post}`, {
+            newComment: {
+                data: newComment,
+                mutation: "CREATED"
+            }
+        })
         return newComment
 
     },
-    deleteComment: (parent, args, { db }, info) => {
+    deleteComment: (parent, args, { db, pubsub }, info) => {
         const commentIndex = db.commentsData.findIndex(comment => comment.id === args.id)
         if (commentIndex === -1) throw new Error("no such comment");
         const commentToDelete = db.commentsData[commentIndex];
 
         db.commentsData = db.commentsData.filter(comment => comment.id !== args.id)
 
+        pubsub.publish(`newComment ${commentToDelete.post}`, {
+            newComment: {
+                data: commentToDelete,
+                mutation: "DELETED"
+            }
+        })
+
         return commentToDelete
     },
-    updateComment: (parent, { id, data }, { db }, info) => {
+    updateComment: (parent, { id, data }, { db, pubsub }, info) => {
         const commentToUpdate = db.commentsData.find(comment => comment.id === id);
         if (!data)
             return commentToUpdate
@@ -179,6 +189,12 @@ const Mutation = {
         if (typeof data.text === 'string') {
             commentToUpdate.text = data.text;
         }
+        pubsub.publish(`newComment ${commentToUpdate.post}`, {
+            newComment: {
+                data: commentToUpdate,
+                mutation: "UPDATED"
+            }
+        })
         return commentToUpdate;
     }
 }
