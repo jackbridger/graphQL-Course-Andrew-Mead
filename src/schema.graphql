@@ -19,7 +19,7 @@
     }
     type Subscription {
         newComment(postID: ID!): Comment!,
-        newPost: Post!
+        newPost: PostSubscriptionPayload!
     }
     input CreateCommentInput {
         text: String!, 
@@ -76,4 +76,8 @@
         text: String!
         author: User!
         post: Post!
+    }
+    type PostSubscriptionPayload {
+        mutation: String!
+        data: Post!
     }
